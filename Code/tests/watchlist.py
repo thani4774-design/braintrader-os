@@ -1,0 +1,7 @@
+WATCHLIST = [
+    "TCS.NS",
+    "INFY.NS",
+    "RELIANCE.NS",
+    "HDFCBANK.NS",
+    "ICICIBANK.NS"
+]

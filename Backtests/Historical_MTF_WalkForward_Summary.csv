@@ -1,0 +1,3 @@
+Period,Start,End,Trades,Net Profit %,CAGR %,Profit Factor,Max Drawdown %
+Training (first 60%),2011-01-01,2014-02-20,37,6.44,2.01,1.71,2.01
+Unseen test (final 40%),2014-02-20,2026-08-05,88,12.26,0.93,1.36,7.01

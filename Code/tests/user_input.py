@@ -1,0 +1,10 @@
+stock_name = input("Enter Stock Name: ")
+buy_price = float(input("Enter Buy Price: "))
+stop_loss = float(input("Enter Stop Loss: "))
+target_price = float(input("Enter Target Price: "))
+
+print("\n===== BrainTrader Recommendation =====")
+print("Stock:", stock_name)
+print("Buy:", buy_price)
+print("Stop Loss:", stop_loss)
+print("Target:", target_price)

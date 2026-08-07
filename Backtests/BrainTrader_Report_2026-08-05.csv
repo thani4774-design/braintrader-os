@@ -1,0 +1,6 @@
+Stock,Entry,MTF Score,Indicator Score,Final Score,Alignment,Decision,Reasons,Stop Loss,Target
+TCS.NS,2413.0,46.94,70,53.86,75,WAIT,"['Macro trend: Bearish', 'Major trend: Bullish Transition', 'Current trend: Bullish', 'Entry trend: Bullish']",,
+ICICIBANK.NS,1450.1,43.04,70,51.13,75,WAIT,"['Macro trend: Bullish', 'Major trend: Bearish Transition', 'Current trend: Bearish Transition', 'Entry trend: Bearish Transition']",,
+HDFCBANK.NS,735.0,48.77,30,43.14,75,WAIT,"['Macro trend: Bearish Transition', 'Major trend: Bullish Transition', 'Current trend: Bullish', 'Entry trend: Bullish']",,
+INFY.NS,1174.0,27.88,50,34.52,75,AVOID,"['Macro trend: Bullish Transition', 'Major trend: Bearish', 'Current trend: Bullish Transition', 'Entry trend: Bullish Transition']",,
+RELIANCE.NS,1280.0,30.02,45,34.51,75,AVOID,"['Macro trend: Bullish Transition', 'Major trend: Bearish Transition', 'Current trend: Bearish Transition', 'Entry trend: Bearish Transition']",,

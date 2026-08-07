@@ -1,0 +1,9 @@
+fastapi==0.141.1
+uvicorn==0.52.1
+pandas==2.2.0
+yfinance==0.2.36
+starlette==0.36.3
+anyio==4.3.0
+h11==0.14.0
+annotated-types==0.6.0
+pydantic==2.6.0
