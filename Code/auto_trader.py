@@ -1,84 +1,134 @@
 """
-BrainTrader
-------------------------
-Phase 10: Headless Automation Engine (Rate-Limited for 500 Stocks)
+BrainTrader - EOD Master Auto-Scanner with Auto-Grader
+------------------------------------------------------
 """
 
-import logging
+import json
 import os
 import time
+import sqlite3
+import yfinance as yf
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from scanner import analyze_stock
-from risk_manager import RiskManager
-from execution.broker_adapter import PaperTradingBroker
-from watchlists import NIFTY50, BANKNIFTY, NIFTY_MIDCAP, NIFTY_SMALLCAP, NIFTY_MICROCAP
+from watchlists import NIFTY50, BANKNIFTY, NIFTY_MIDCAP, NIFTY_SMALLCAP
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
+MASTER_UNIVERSE = sorted(list(set(NIFTY50 + BANKNIFTY + NIFTY_MIDCAP + NIFTY_SMALLCAP)))
+DB_PATH = r"C:\BrainTrader\trade_history.db"
 
-# Combine all watchlists into a massive master universe
-MASTER_UNIVERSE = list(set(NIFTY50 + BANKNIFTY + NIFTY_MIDCAP + NIFTY_SMALLCAP + NIFTY_MICROCAP))
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS trades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            symbol TEXT,
+            entry REAL,
+            target_1 REAL,
+            stop_loss REAL,
+            status TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
 
-def run_daily_automation():
+def log_trade(date, symbol, entry, target, sl):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT * FROM trades WHERE date=? AND symbol=?", (date, symbol))
+    if not c.fetchone():
+        c.execute("INSERT INTO trades (date, symbol, entry, target_1, stop_loss, status) VALUES (?, ?, ?, ?, ?, ?)",
+                  (date, symbol, entry, target, sl, "ACTIVE"))
+        conn.commit()
+    conn.close()
+
+def grade_active_trades():
     print("=" * 60)
-    print(f"BRAINTRADER AUTOMATION INITIATED: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+    print("RUNNING AUTO-GRADER ON PAST ACTIVE TRADES...")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
     
-    initial_capital = 1000000
-    broker = PaperTradingBroker(initial_balance=initial_capital)
-    risk_manager = RiskManager(max_risk_per_trade_pct=0.02, max_portfolio_exposure_pct=0.60)
+    # NEW FIX: Only grade trades that were NOT logged today (T+1 Grading)
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    c.execute("SELECT id, symbol, target_1, stop_loss, date FROM trades WHERE status='ACTIVE' AND date != ?", (today_str,))
+    active_trades = c.fetchall()
     
-    buys_executed = []
-    
-    print(f"[*] Scanning {len(MASTER_UNIVERSE)} symbols. Rate-limiting engaged to prevent API bans...")
-    
-    # Throttle workers to 2 to protect the local IP address
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        future_to_symbol = {executor.submit(analyze_stock, sym): sym for sym in MASTER_UNIVERSE}
-        
-        for count, future in enumerate(as_completed(future_to_symbol), 1):
-            symbol = future_to_symbol[future]
-            try:
-                res = future.result()
-                if res and res["Decision"] == "STRONG_BUY":
-                    setup = res["TradeSetup"]
-                    current_deployed = sum(pos["quantity"] * pos["entry_price"] for pos in broker.positions.values())
-                    
-                    qty, risk_details = risk_manager.calculate_position_size(
-                        account_balance=initial_capital,
-                        current_deployed_capital=current_deployed,
-                        entry_price=res['Price'],
-                        stop_loss=setup.get("stop_loss")
-                    )
-                    
-                    if qty > 0:
-                        logging.info(f"STRONG BUY Triggered: {symbol} at ₹{res['Price']}")
-                        broker.place_order(symbol, "MARKET", qty, res['Price'], setup.get("stop_loss"), setup.get("target1"))
-                        buys_executed.append({"stock": symbol, "price": res['Price'], "qty": qty, "risk": risk_details['portfolio_risk_pct']})
-                        
-            except Exception as e:
-                logging.error(f"Failed to process {symbol}: {e}")
+    updated_count = 0
+    for trade in active_trades:
+        trade_id, symbol, target_1, sl, trade_date = trade
+        try:
+            ticker = yf.Ticker(symbol)
+            df = ticker.history(start=trade_date)
+            
+            if df.empty:
+                continue
                 
-            # Print progress cleanly
-            if count % 25 == 0:
-                print(f"[*] Processed {count}/{len(MASTER_UNIVERSE)} stocks...")
+            recent_high = df['High'].max()
+            recent_low = df['Low'].min()
             
-            # Rate Limiter: Pause for 1 second between processing to respect API limits
-            time.sleep(1)
+            new_status = 'ACTIVE'
+            if recent_high >= target_1:
+                new_status = 'WON'
+            elif recent_low <= sl:
+                new_status = 'LOST'
+                
+            if new_status != 'ACTIVE':
+                c.execute("UPDATE trades SET status=? WHERE id=?", (new_status, trade_id))
+                conn.commit()
+                updated_count += 1
+                print(f"[GRADER] {symbol} resolved as {new_status}!")
+        except Exception as e:
+            pass
+            
+    conn.close()
+    print(f"Auto-Grader finished. {updated_count} trades resolved.")
+    print("=" * 60)
 
-    # --- Generate Daily Report ---
-    report_path = r"C:\BrainTrader\daily_trade_report.txt"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] SCAN COMPLETE.\n")
-        f.write(f"Universe Scanned: {len(MASTER_UNIVERSE)} stocks.\n\n")
-        if buys_executed:
-            f.write("EXECUTED TRADES:\n")
-            for b in buys_executed:
-                f.write(f" -> BOUGHT {b['qty']} shares of {b['stock']} @ ₹{b['price']} (Risk: {b['risk']}%)\n")
-        else:
-            f.write(" -> No STRONG_BUY setups detected in today's scan. Capital preserved.\n")
+def run_eod_scan():
+    init_db()
+    grade_active_trades()
+    
+    print(f"STARTING EOD MASTER SCAN: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
+    
+    top_setups = []
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    
+    for count, symbol in enumerate(MASTER_UNIVERSE, 1):
+        try:
+            res = analyze_stock(symbol, timeframe="short")
+            if res and res.get("Decision") == "STRONG_BUY":
+                top_setups.append(res)
+                print(f"[✓] FOUND SETUP: {symbol} @ ₹{res['Price']}")
+        except Exception as e:
+            pass
             
-    print(f"\n[*] Scan complete. Feed updated. Reload your web browser.")
+        if count % 20 == 0:
+            print(f"[*] Processed {count}/{len(MASTER_UNIVERSE)} stocks...")
+        time.sleep(0.3)
+        
+    top_setups = sorted(top_setups, key=lambda x: x.get("Score", 0), reverse=True)
+    
+    for setup in top_setups:
+        sym = setup["Stock"]
+        entry = setup["TradeSetup"]["entry"]
+        t1 = setup["TradeSetup"]["target_1"]
+        sl = setup["TradeSetup"]["stop_loss"]
+        log_trade(today_str, sym, entry, t1, sl)
+    
+    output_data = {
+        "last_updated": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "total_scanned": len(MASTER_UNIVERSE),
+        "setups": top_setups
+    }
+    
+    save_path = r"C:\BrainTrader\daily_setups.json"
+    with open(save_path, "w", encoding="utf-8") as f:
+        json.dump(output_data, f, indent=4)
+        
+    print("=" * 60)
+    print(f"EOD SCAN COMPLETE! Found {len(top_setups)} total setups.")
+    print("=" * 60)
 
 if __name__ == "__main__":
-    run_daily_automation()
+    run_eod_scan()
