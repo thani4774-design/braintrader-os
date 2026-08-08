@@ -1,27 +1,7 @@
 {
-    "last_updated": "07 Aug 2026, 09:13 PM",
+    "last_updated": "08 Aug 2026, 12:18 PM",
     "total_scanned": 500,
     "setups": [
-        {
-            "Stock": "3MINDIA.NS",
-            "Price": 36035.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 36035.0,
-                "stop_loss": 34947.5,
-                "target_1": 37666.25,
-                "target_2": 38753.75,
-                "trailing_sl": "Move SL to Entry (\u20b936035.0) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
         {
             "Stock": "AARTIIND.NS",
             "Price": 502.1,
@@ -34,46 +14,6 @@
                 "target_1": 538.06,
                 "target_2": 562.04,
                 "trailing_sl": "Move SL to Entry (\u20b9502.1) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "AJANTPHARM.NS",
-            "Price": 3489.2,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 3489.2,
-                "stop_loss": 3341.65,
-                "target_1": 3710.52,
-                "target_2": 3858.07,
-                "trailing_sl": "Move SL to Entry (\u20b93489.2) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "ALKEM.NS",
-            "Price": 5620.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 5620.0,
-                "stop_loss": 5430.59,
-                "target_1": 5904.12,
-                "target_2": 6093.53,
-                "trailing_sl": "Move SL to Entry (\u20b95620.0) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -283,46 +223,6 @@
             ]
         },
         {
-            "Stock": "BOSCHLTD.NS",
-            "Price": 42950.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 42950.0,
-                "stop_loss": 40847.71,
-                "target_1": 46103.43,
-                "target_2": 48205.72,
-                "trailing_sl": "Move SL to Entry (\u20b942950.0) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "BRIGADE.NS",
-            "Price": 581.95,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 581.95,
-                "stop_loss": 544.64,
-                "target_1": 637.92,
-                "target_2": 675.23,
-                "trailing_sl": "Move SL to Entry (\u20b9581.95) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
             "Stock": "BRITANNIA.NS",
             "Price": 5510.0,
             "Timeframe": "SHORT",
@@ -354,46 +254,6 @@
                 "target_1": 139.06,
                 "target_2": 143.8,
                 "trailing_sl": "Move SL to Entry (\u20b9131.95) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "CANHLIFE.NS",
-            "Price": 152.19,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 152.19,
-                "stop_loss": 138.85,
-                "target_1": 172.21,
-                "target_2": 185.55,
-                "trailing_sl": "Move SL to Entry (\u20b9152.19) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "CARBORUNIV.NS",
-            "Price": 1097.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 1097.0,
-                "stop_loss": 1054.35,
-                "target_1": 1160.97,
-                "target_2": 1203.62,
-                "trailing_sl": "Move SL to Entry (\u20b91097.0) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -443,46 +303,6 @@
             ]
         },
         {
-            "Stock": "COHANCE.NS",
-            "Price": 445.75,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 445.75,
-                "stop_loss": 417.77,
-                "target_1": 487.71,
-                "target_2": 515.69,
-                "trailing_sl": "Move SL to Entry (\u20b9445.75) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "CPPLUS.NS",
-            "Price": 3708.7,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 3708.7,
-                "stop_loss": 3474.6,
-                "target_1": 4059.85,
-                "target_2": 4293.95,
-                "trailing_sl": "Move SL to Entry (\u20b93708.7) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
             "Stock": "CUB.NS",
             "Price": 212.0,
             "Timeframe": "SHORT",
@@ -494,46 +314,6 @@
                 "target_1": 243.77,
                 "target_2": 264.95,
                 "trailing_sl": "Move SL to Entry (\u20b9212.0) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "DALBHARAT.NS",
-            "Price": 1827.4,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 1827.4,
-                "stop_loss": 1725.05,
-                "target_1": 1980.92,
-                "target_2": 2083.27,
-                "trailing_sl": "Move SL to Entry (\u20b91827.4) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "EMAMILTD.NS",
-            "Price": 412.55,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 412.55,
-                "stop_loss": 397.52,
-                "target_1": 435.09,
-                "target_2": 450.11,
-                "trailing_sl": "Move SL to Entry (\u20b9412.55) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -594,26 +374,6 @@
                 "target_1": 1012.34,
                 "target_2": 1050.46,
                 "trailing_sl": "Move SL to Entry (\u20b9955.15) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "GLAXO.NS",
-            "Price": 2599.7,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 2599.7,
-                "stop_loss": 2485.2,
-                "target_1": 2771.45,
-                "target_2": 2885.95,
-                "trailing_sl": "Move SL to Entry (\u20b92599.7) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -703,26 +463,6 @@
             ]
         },
         {
-            "Stock": "HEXT.NS",
-            "Price": 564.6,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 564.6,
-                "stop_loss": 519.2,
-                "target_1": 632.7,
-                "target_2": 678.1,
-                "trailing_sl": "Move SL to Entry (\u20b9564.6) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
             "Stock": "HFCL.NS",
             "Price": 207.98,
             "Timeframe": "SHORT",
@@ -734,26 +474,6 @@
                 "target_1": 243.19,
                 "target_2": 266.67,
                 "trailing_sl": "Move SL to Entry (\u20b9207.98) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "HONASA.NS",
-            "Price": 477.6,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 477.6,
-                "stop_loss": 456.25,
-                "target_1": 509.63,
-                "target_2": 530.98,
-                "trailing_sl": "Move SL to Entry (\u20b9477.6) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -883,26 +603,6 @@
             ]
         },
         {
-            "Stock": "JSL.NS",
-            "Price": 734.65,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 734.65,
-                "stop_loss": 712.2,
-                "target_1": 768.33,
-                "target_2": 790.78,
-                "trailing_sl": "Move SL to Entry (\u20b9734.65) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
             "Stock": "JSWENERGY.NS",
             "Price": 564.4,
             "Timeframe": "SHORT",
@@ -954,66 +654,6 @@
                 "target_1": 676.73,
                 "target_2": 723.68,
                 "trailing_sl": "Move SL to Entry (\u20b9606.3) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "KFINTECH.NS",
-            "Price": 936.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 936.0,
-                "stop_loss": 872.55,
-                "target_1": 1031.18,
-                "target_2": 1094.63,
-                "trailing_sl": "Move SL to Entry (\u20b9936.0) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "KIMS.NS",
-            "Price": 811.1,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 811.1,
-                "stop_loss": 786.75,
-                "target_1": 847.62,
-                "target_2": 871.97,
-                "trailing_sl": "Move SL to Entry (\u20b9811.1) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "KPIL.NS",
-            "Price": 1317.2,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 1317.2,
-                "stop_loss": 1270.85,
-                "target_1": 1386.73,
-                "target_2": 1433.08,
-                "trailing_sl": "Move SL to Entry (\u20b91317.2) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -1123,26 +763,6 @@
             ]
         },
         {
-            "Stock": "MRF.NS",
-            "Price": 134190.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 134190.0,
-                "stop_loss": 131565.0,
-                "target_1": 138127.5,
-                "target_2": 140752.5,
-                "trailing_sl": "Move SL to Entry (\u20b9134190.0) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
             "Stock": "MSUMI.NS",
             "Price": 41.16,
             "Timeframe": "SHORT",
@@ -1174,26 +794,6 @@
                 "target_1": 617.34,
                 "target_2": 661.56,
                 "trailing_sl": "Move SL to Entry (\u20b9551.0) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "NYKAA.NS",
-            "Price": 332.0,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 332.0,
-                "stop_loss": 316.52,
-                "target_1": 355.21,
-                "target_2": 370.69,
-                "trailing_sl": "Move SL to Entry (\u20b9332.0) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -1294,26 +894,6 @@
                 "target_1": 692.56,
                 "target_2": 733.84,
                 "trailing_sl": "Move SL to Entry (\u20b9630.65) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "POLICYBZR.NS",
-            "Price": 1604.5,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 1604.5,
-                "stop_loss": 1518.6,
-                "target_1": 1733.35,
-                "target_2": 1819.25,
-                "trailing_sl": "Move SL to Entry (\u20b91604.5) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [
@@ -1494,26 +1074,6 @@
                 "target_1": 1189.97,
                 "target_2": 1251.82,
                 "trailing_sl": "Move SL to Entry (\u20b91097.2) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
-            },
-            "Reasons": [
-                "Trading in a healthy uptrend (Above 50 EMA).",
-                "Price is in a discount/pullback zone (RSI balanced).",
-                "Fresh buying momentum detected today."
-            ]
-        },
-        {
-            "Stock": "SCHNEIDER.NS",
-            "Price": 1354.8,
-            "Timeframe": "SHORT",
-            "Score": 100,
-            "Decision": "STRONG_BUY",
-            "TradeSetup": {
-                "entry": 1354.8,
-                "stop_loss": 1280.8,
-                "target_1": 1465.8,
-                "target_2": 1539.8,
-                "trailing_sl": "Move SL to Entry (\u20b91354.8) when price hits Target 1",
                 "risk_reward": "1:2.5 Max"
             },
             "Reasons": [

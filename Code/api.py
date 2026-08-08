@@ -7,7 +7,7 @@ import json
 import os
 import sqlite3
 
-app = FastAPI(title="BrainTrader OS Pro")
+app = FastAPI(title="BrainTrader OS Pro V3")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,7 +35,6 @@ HTML_LAYOUT = """
         .logo { font-size: 24px; font-weight: 800; color: #fff; }
         .logo span { color: #00e676; }
         
-        /* Navigation Tabs */
         .main-nav { display: flex; gap: 15px; margin-bottom: 24px; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
         .nav-btn { background: transparent; border: none; color: #64748b; font-size: 16px; font-weight: 700; cursor: pointer; padding: 8px 12px; }
         .nav-btn.active { color: #00e676; border-bottom: 2px solid #00e676; }
@@ -43,35 +42,48 @@ HTML_LAYOUT = """
         .view-section { display: none; }
         .view-section.active { display: block; }
 
-        /* Capital Allocator */
-        .capital-box { background: #0f172a; padding: 20px; border-radius: 10px; border: 1px solid #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .capital-box { background: #0f172a; padding: 20px; border-radius: 10px; border: 1px solid #1e293b; margin-bottom: 20px; }
+        .cap-top { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 10px; }
         .capital-label { color: #94a3b8; font-weight: 700; font-size: 14px; text-transform: uppercase; }
         .capital-input { background: #0b0e14; border: 1px solid #1e293b; color: #fff; padding: 10px 16px; border-radius: 6px; font-size: 18px; font-weight: 700; width: 150px; outline: none; }
         .capital-input:focus { border-color: #00e676; }
-        .capital-summary { color: #38bdf8; font-weight: 600; font-size: 14px; }
+        .capital-summary { color: #38bdf8; font-weight: 600; font-size: 14px; background: rgba(56,189,248,0.1); padding: 8px 12px; border-radius: 6px; display: inline-block;}
+        .clear-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .clear-btn:hover { background: rgba(239, 68, 68, 0.1); }
 
-        /* Today's Feed */
-        .section-header { font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
-        .recom-card { background: #0f172a; border: 1px solid #1e293b; border-left: 4px solid #00e676; border-radius: 10px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .controls-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; background: #0f172a; padding: 12px 16px; border-radius: 8px; border: 1px solid #1e293b;}
+        .section-header { font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; display: flex; align-items: center; gap: 10px;}
+        .sort-select { background: #1e293b; color: #fff; border: 1px solid #334155; padding: 8px 12px; border-radius: 6px; font-weight: 600; outline: none; cursor: pointer;}
+        
+        .recom-card { background: #0f172a; border: 1px solid #1e293b; border-left: 4px solid #00e676; border-radius: 10px; margin-bottom: 12px; overflow: hidden; transition: 0.2s;}
+        .rc-main { padding: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .rc-left { display: flex; align-items: center; gap: 15px; }
+        .rc-checkbox { width: 22px; height: 22px; accent-color: #00e676; cursor: pointer; }
+        
         .recom-sym { font-size: 20px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
         .recom-details { font-size: 13px; color: #94a3b8; margin-top: 8px; display: flex; gap: 16px; }
         .qty-badge { background: rgba(56,189,248,0.15); color: #38bdf8; padding: 4px 10px; border-radius: 6px; font-size: 14px; font-weight: 800; border: 1px solid rgba(56,189,248,0.3); }
+        
         .recom-btn { background: #1e293b; color: #00e676; border: 1px solid #00e676; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
         .recom-btn:hover { background: #00e676; color: #000; }
         
-        /* Search */
-        .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
-        input.search-input { flex: 1; padding: 16px; border-radius: 8px; border: 1px solid #1e293b; background: #0f172a; color: #fff; font-size: 16px; outline: none; }
-        input.search-input:focus { border-color: #00e676; }
-        button.btn-search { background: #00e676; color: #000; font-weight: 700; border: none; padding: 0 24px; border-radius: 8px; cursor: pointer; font-size: 16px; }
-        
-        /* Timeframe Tabs */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #0f172a; padding: 8px; border-radius: 10px; }
-        .tab { flex: 1; text-align: center; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
-        .tab.active { background: #1e293b; color: #00e676; }
-        
-        /* Clean Trade Card */
-        .trade-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; display: none; margin-bottom: 20px;}
+        .inline-details { display: none; background: #0b0e14; padding: 20px; border-top: 1px solid #1e293b; }
+        .tc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; }
+        .tc-box { background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #1e293b; }
+        .tc-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+        .tc-value { font-size: 18px; font-weight: 700; color: #fff; }
+        .tc-value.green { color: #00e676; }
+        .tc-value.red { color: #ef4444; }
+        .tc-subtext { font-size: 12px; font-weight: 600; margin-top: 4px; }
+        .trail-box { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px; border-radius: 8px; color: #38bdf8; font-size: 13px; font-weight: 600; }
+
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; margin-bottom: 40px; }
+        .page-btn { background: #1e293b; color: #fff; border: 1px solid #334155; padding: 10px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; }
+        .page-btn:hover { background: #38bdf8; color: #000; border-color: #38bdf8; }
+        .page-btn:disabled { background: #0b0e14; color: #334155; cursor: not-allowed; border-color: #1e293b; }
+        .page-info { font-weight: 700; color: #94a3b8; font-size: 16px; }
+
+        .trade-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; display: none; margin-top: 20px;}
         .tc-header { display: flex; justify-content: space-between; border-bottom: 1px solid #1e293b; padding-bottom: 16px; margin-bottom: 16px; }
         .tc-symbol { font-size: 28px; font-weight: 800; }
         .tc-price { font-size: 18px; color: #94a3b8; }
@@ -79,18 +91,17 @@ HTML_LAYOUT = """
         .badge.buy { background: rgba(0, 230, 118, 0.15); color: #00e676; border: 1px solid #00e676; }
         .badge.wait { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444; }
 
-        .tc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .tc-box { background: #0b0e14; padding: 16px; border-radius: 8px; border: 1px solid #1e293b; }
-        .tc-label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-        .tc-value { font-size: 20px; font-weight: 700; color: #fff; }
-        .tc-value.green { color: #00e676; }
-        .tc-value.red { color: #ef4444; }
-        .tc-subtext { font-size: 12px; font-weight: 600; margin-top: 4px; }
-
-        .trailing-sl-box { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 16px; border-radius: 8px; color: #38bdf8; font-weight: 600; font-size: 14px; }
-        .loader { display: none; text-align: center; color: #00e676; font-weight: 600; margin: 40px 0; }
+        .search-container { margin-top: 40px; border-top: 1px solid #1e293b; padding-top: 20px; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 24px; }
+        input.search-input { flex: 1; padding: 16px; border-radius: 8px; border: 1px solid #1e293b; background: #0f172a; color: #fff; font-size: 16px; outline: none; }
+        input.search-input:focus { border-color: #00e676; }
+        button.btn-search { background: #00e676; color: #000; font-weight: 700; border: none; padding: 0 24px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: #0f172a; padding: 8px; border-radius: 10px; }
+        .tab { flex: 1; text-align: center; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #64748b; transition: 0.2s; }
+        .tab.active { background: #1e293b; color: #00e676; }
         
-        /* History Table & Badges */
+        .loader { display: none; text-align: center; color: #00e676; font-weight: 600; margin: 40px 0; }
+
         .history-table { width: 100%; border-collapse: collapse; background: #0f172a; border-radius: 10px; overflow: hidden; }
         .history-table th, .history-table td { padding: 14px; text-align: left; border-bottom: 1px solid #1e293b; font-size: 14px; }
         .history-table th { background: #162032; color: #64748b; font-weight: 700; text-transform: uppercase; font-size: 12px; }
@@ -106,7 +117,7 @@ HTML_LAYOUT = """
     <div class="container">
         <div class="header">
             <div class="logo">BrainTrader<span>.</span></div>
-            <div style="color: #64748b; font-weight: 600; font-size: 14px;">End-of-Day Screening App</div>
+            <div style="color: #64748b; font-weight: 600; font-size: 14px;">Pro OS v3.0</div>
         </div>
 
         <div class="main-nav">
@@ -114,74 +125,83 @@ HTML_LAYOUT = """
             <button class="nav-btn" onclick="switchView('history'); loadHistory();">Past Performance</button>
         </div>
 
-        <!-- Live Scanner View -->
         <div id="view-live" class="view-section active">
             <div class="capital-box">
-                <div class="capital-label">Investable Capital (₹) :</div>
-                <input type="number" id="capitalInput" class="capital-input" placeholder="e.g. 20000" oninput="renderFeed()">
-                <div id="allocSummary" class="capital-summary">Enter amount to auto-calculate share quantities.</div>
+                <div class="cap-top">
+                    <div class="capital-label">Investable Capital (₹) :</div>
+                    <input type="number" id="capitalInput" class="capital-input" placeholder="e.g. 20000" oninput="renderFeed()">
+                    <button class="clear-btn" onclick="clearSelections()">Clear Selections</button>
+                </div>
+                <div id="allocSummary" class="capital-summary">Select specific stocks below to divide your capital.</div>
             </div>
 
-            <div class="section-header">
-                <span>Today's Top Recommendations</span>
-                <span id="lastUpdated" style="color: #00e676;">--</span>
+            <div class="controls-row">
+                <div class="section-header">Top Recommendations (<span id="totalSetupsText">0</span>) </div>
+                <select class="sort-select" id="sortOption" onchange="renderFeed(true)">
+                    <option value="profit">Sort by: Profit % (Highest First)</option>
+                    <option value="price_low">Sort by: Price (Low to High)</option>
+                    <option value="price_high">Sort by: Price (High to Low)</option>
+                    <option value="algo">Sort by: Alphabetical</option>
+                </select>
             </div>
             
-            <div id="recomFeed" style="margin-bottom: 30px;">Loading recommendations...</div>
+            <div id="recomFeed">Loading recommendations...</div>
 
-            <div class="section-header"><span>Individual Stock Search</span></div>
-            <div class="tabs">
-                <div class="tab active" id="tab-short" onclick="setTimeframe('short')">Short Term (Days)</div>
-                <div class="tab" id="tab-mid" onclick="setTimeframe('mid')">Mid Term (Weeks)</div>
-                <div class="tab" id="tab-long" onclick="setTimeframe('long')">Long Term (Months)</div>
+            <div class="pagination">
+                <button class="page-btn" id="btnPrev" onclick="changePage(-1)">Previous</button>
+                <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                <button class="page-btn" id="btnNext" onclick="changePage(1)">Next Page</button>
             </div>
 
-            <div class="search-box">
-                <input type="text" id="symbolInput" class="search-input" placeholder="Enter Stock Symbol (e.g. RELIANCE, ZOMATO)" onkeypress="if(event.key==='Enter') analyze()">
-                <button class="btn-search" onclick="analyze()">Scan Stock</button>
-            </div>
-
-            <div id="loader" class="loader">Scanning Stock Data...</div>
-
-            <div class="trade-card" id="tradeCard">
-                <div class="tc-header">
-                    <div>
-                        <div class="tc-symbol" id="c-sym">--</div>
-                        <div class="tc-price" id="c-price">₹0.00</div>
-                    </div>
-                    <div class="badge wait" id="c-badge">WAIT</div>
+            <div class="search-container">
+                <div class="section-header" style="margin-bottom: 14px;">Individual Stock Search</div>
+                <div class="tabs">
+                    <div class="tab active" id="tab-short" onclick="setTimeframe('short')">Short Term (Days)</div>
+                    <div class="tab" id="tab-mid" onclick="setTimeframe('mid')">Mid Term (Weeks)</div>
+                    <div class="tab" id="tab-long" onclick="setTimeframe('long')">Long Term (Months)</div>
                 </div>
 
-                <div class="tc-grid">
-                    <div class="tc-box">
-                        <div class="tc-label">Entry Price</div>
-                        <div class="tc-value" id="c-entry">--</div>
-                        <div class="tc-subtext" id="c-alloc-shares" style="color:#38bdf8;">Allocated: -- shares</div>
-                    </div>
-                    <div class="tc-box">
-                        <div class="tc-label">Stop Loss (Risk)</div>
-                        <div class="tc-value red" id="c-sl">--</div>
-                        <div class="tc-subtext red" id="c-risk-amt">Total Risk: --</div>
-                    </div>
-                    <div class="tc-box">
-                        <div class="tc-label">Target 1 Profit</div>
-                        <div class="tc-value green" id="c-t1">--</div>
-                        <div class="tc-subtext green" id="c-t1-profit">Est. Profit: --</div>
-                    </div>
-                    <div class="tc-box">
-                        <div class="tc-label">Target 2 Profit</div>
-                        <div class="tc-value green" id="c-t2">--</div>
-                        <div class="tc-subtext green" id="c-t2-profit">Est. Profit: --</div>
-                    </div>
+                <div class="search-box">
+                    <input type="text" id="symbolInput" class="search-input" placeholder="Enter Stock Symbol (e.g. ZOMATO)" onkeypress="if(event.key==='Enter') analyze()">
+                    <button class="btn-search" onclick="analyze()">Scan Stock</button>
                 </div>
-                <div class="trailing-sl-box" id="c-trail">Trailing SL Strategy: --</div>
+                <div id="loader" class="loader">Scanning Stock Data...</div>
+                
+                <div class="trade-card" id="tradeCard">
+                    <div class="tc-header">
+                        <div>
+                            <div class="tc-symbol" id="c-sym">--</div>
+                            <div class="tc-price" id="c-price">₹0.00</div>
+                        </div>
+                        <div class="badge wait" id="c-badge">WAIT</div>
+                    </div>
+
+                    <div class="tc-grid">
+                        <div class="tc-box">
+                            <div class="tc-label">Entry Price</div>
+                            <div class="tc-value" id="c-entry">--</div>
+                        </div>
+                        <div class="tc-box">
+                            <div class="tc-label">Stop Loss</div>
+                            <div class="tc-value red" id="c-sl">--</div>
+                        </div>
+                        <div class="tc-box">
+                            <div class="tc-label">Target 1 Profit</div>
+                            <div class="tc-value green" id="c-t1">--</div>
+                        </div>
+                        <div class="tc-box">
+                            <div class="tc-label">Target 2 Profit</div>
+                            <div class="tc-value green" id="c-t2">--</div>
+                        </div>
+                    </div>
+                    <div class="trail-box" id="c-trail">Trailing SL Strategy: --</div>
+                </div>
             </div>
         </div>
 
-        <!-- History View -->
         <div id="view-history" class="view-section">
-            <div class="section-header">
-                <span>All Logged Trades</span>
+            <div class="controls-row">
+                <span class="section-header">All Logged Trades</span>
                 <div class="win-rate-box">Win Rate: <span id="winRateDisplay">--%</span></div>
             </div>
             <table class="history-table">
@@ -204,7 +224,11 @@ HTML_LAYOUT = """
 
     <script>
         let currentTimeframe = 'short';
-        let currentSetups = [];
+        let originalSetups = [];
+        let selectedStocks = new Set();
+        let currentPage = 1;
+        const itemsPerPage = 12;
+        let isSorted = false;
 
         function switchView(viewId) {
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -217,64 +241,162 @@ HTML_LAYOUT = """
             try {
                 const res = await fetch('/get_daily_setups');
                 const data = await res.json();
-                document.getElementById('lastUpdated').innerText = data.last_updated || 'Not run yet';
+                
                 if (data.setups && data.setups.length > 0) {
-                    currentSetups = data.setups;
-                    renderFeed();
+                    originalSetups = data.setups;
+                    document.getElementById('totalSetupsText').innerText = originalSetups.length;
+                    originalSetups.slice(0, 5).forEach(s => selectedStocks.add(s.Stock));
+                    renderFeed(true);
                 } else {
-                    document.getElementById('recomFeed').innerHTML = '<div style="background:#0f172a; padding:16px; border-radius:8px; color:#64748b;">No EOD scan results found. Run master scan.</div>';
+                    document.getElementById('recomFeed').innerHTML = '<div style="color:#64748b; background:#0f172a; padding:20px; border-radius:8px;">No setups found. Run master scan first.</div>';
+                    document.querySelector('.pagination').style.display = 'none';
                 }
-            } catch (e) {
-                document.getElementById('recomFeed').innerText = 'No data available.';
+            } catch (e) {}
+        }
+
+        function toggleSelection(symbol) {
+            if (selectedStocks.has(symbol)) {
+                selectedStocks.delete(symbol);
+            } else {
+                selectedStocks.add(symbol);
+            }
+            renderFeed(false); 
+        }
+
+        function clearSelections() {
+            selectedStocks.clear();
+            renderFeed(false);
+        }
+
+        function toggleDetails(symbol) {
+            const el = document.getElementById('details-' + symbol);
+            if(el.style.display === 'none' || el.style.display === '') {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
             }
         }
 
-        function renderFeed() {
+        function changePage(direction) {
+            currentPage += direction;
+            renderFeed(false); 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderFeed(forceSort = false) {
             const feed = document.getElementById('recomFeed');
-            const capitalInput = document.getElementById('capitalInput').value;
-            const totalCapital = parseFloat(capitalInput);
+            const capitalInput = parseFloat(document.getElementById('capitalInput').value);
+            const sortMethod = document.getElementById('sortOption').value;
             
-            let html = '';
-            let hasCapital = !isNaN(totalCapital) && totalCapital > 0;
-            let capitalPerStock = hasCapital ? (totalCapital / currentSetups.length) : 0;
-            
-            if(hasCapital) {
-                document.getElementById('allocSummary').innerText = `Allocating approx ₹${capitalPerStock.toFixed(0)} per stock (${currentSetups.length} stocks)`;
-            } else {
-                document.getElementById('allocSummary').innerText = `Enter amount to auto-calculate share quantities.`;
+            if (forceSort || !isSorted) {
+                if (sortMethod === 'price_low') {
+                    originalSetups.sort((a,b) => parseFloat(a.TradeSetup.entry) - parseFloat(b.TradeSetup.entry));
+                } else if (sortMethod === 'price_high') {
+                    originalSetups.sort((a,b) => parseFloat(b.TradeSetup.entry) - parseFloat(a.TradeSetup.entry));
+                } else if (sortMethod === 'profit') {
+                    originalSetups.sort((a,b) => {
+                        let pA = (parseFloat(a.TradeSetup.target_1) - parseFloat(a.TradeSetup.entry)) / parseFloat(a.TradeSetup.entry);
+                        let pB = (parseFloat(b.TradeSetup.target_1) - parseFloat(b.TradeSetup.entry)) / parseFloat(b.TradeSetup.entry);
+                        return pB - pA;
+                    });
+                } else if (sortMethod === 'algo') {
+                    originalSetups.sort((a,b) => a.Stock.localeCompare(b.Stock));
+                }
+                isSorted = true;
+                currentPage = 1; 
             }
 
-            currentSetups.forEach(s => {
+            let numSelected = selectedStocks.size;
+            let hasCapital = !isNaN(capitalInput) && capitalInput > 0 && numSelected > 0;
+            let capitalPerStock = hasCapital ? (capitalInput / numSelected) : 0;
+            
+            if (numSelected === 0) {
+                document.getElementById('allocSummary').innerText = `Select specific stocks below to divide your capital.`;
+            } else if (hasCapital) {
+                document.getElementById('allocSummary').innerText = `Allocating ₹${capitalPerStock.toFixed(0)} per selected stock (${numSelected} total)`;
+            } else {
+                document.getElementById('allocSummary').innerText = `${numSelected} selected. Enter capital above to calculate shares.`;
+            }
+
+            const totalPages = Math.ceil(originalSetups.length / itemsPerPage);
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages || 1}`;
+            document.getElementById('btnPrev').disabled = currentPage === 1;
+            document.getElementById('btnNext').disabled = currentPage === totalPages || totalPages === 0;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const pageSetups = originalSetups.slice(startIndex, startIndex + itemsPerPage);
+
+            let html = '';
+            pageSetups.forEach(s => {
+                let sym = s.Stock;
+                let cleanSym = sym.replace('.NS','');
                 let entryPrice = parseFloat(s.TradeSetup.entry);
+                let sl = parseFloat(s.TradeSetup.stop_loss);
+                let t1 = parseFloat(s.TradeSetup.target_1);
+                let isChecked = selectedStocks.has(sym);
+                
                 let qtyHtml = '';
-                if (hasCapital) {
+                let inlineMath = {qty: 0, profit: 0, risk: 0};
+                
+                if (isChecked && hasCapital) {
                     let qty = Math.floor(capitalPerStock / entryPrice);
                     if (qty > 0) {
-                        let cost = (qty * entryPrice).toFixed(2);
-                        qtyHtml = `<div class="qty-badge">Buy ${qty} Shares (Cost: ₹${cost})</div>`;
+                        qtyHtml = `<div class="qty-badge">Buy ${qty} Shares (Cost: ₹${(qty*entryPrice).toFixed(2)})</div>`;
+                        inlineMath.qty = qty;
+                        inlineMath.profit = (t1 - entryPrice) * qty;
+                        inlineMath.risk = (entryPrice - sl) * qty;
                     } else {
                         qtyHtml = `<div class="qty-badge" style="color:#ef4444; border-color:#ef4444; background:rgba(239,68,68,0.15);">Not enough capital</div>`;
                     }
                 }
+
                 html += `
                     <div class="recom-card">
-                        <div>
-                            <div class="recom-sym">🟢 ${s.Stock.replace('.NS','')} ${qtyHtml}</div>
-                            <div class="recom-details">
-                                <span>Entry: <b>₹${s.TradeSetup.entry}</b></span>
-                                <span>SL: <b style="color:#ef4444;">₹${s.TradeSetup.stop_loss}</b></span>
-                                <span>T1: <b style="color:#00e676;">₹${s.TradeSetup.target_1}</b></span>
+                        <div class="rc-main">
+                            <div class="rc-left">
+                                <input type="checkbox" class="rc-checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelection('${sym}')">
+                                <div>
+                                    <div class="recom-sym">🟢 ${cleanSym} ${qtyHtml}</div>
+                                    <div class="recom-details">
+                                        <span>Entry: <b>₹${entryPrice}</b></span>
+                                        <span>SL: <b style="color:#ef4444;">₹${sl}</b></span>
+                                        <span>T1: <b style="color:#00e676;">₹${t1}</b></span>
+                                    </div>
+                                </div>
                             </div>
+                            <button class="recom-btn" onclick="toggleDetails('${sym}')">View Details ▾</button>
                         </div>
-                        <button class="recom-btn" onclick="quickScan('${s.Stock.replace('.NS','')}')">View Details</button>
-                    </div>`;
+                        
+                        <div class="inline-details" id="details-${sym}">
+                            <div class="tc-grid">
+                                <div class="tc-box">
+                                    <div class="tc-label">Allocated Shares</div>
+                                    <div class="tc-value">${inlineMath.qty > 0 ? inlineMath.qty : '--'}</div>
+                                </div>
+                                <div class="tc-box">
+                                    <div class="tc-label">Stop Loss (Total Risk)</div>
+                                    <div class="tc-value red">₹${sl}</div>
+                                    <div class="tc-subtext red">Risk Amount: ${inlineMath.qty > 0 ? '-₹'+inlineMath.risk.toFixed(2) : '--'}</div>
+                                </div>
+                                <div class="tc-box">
+                                    <div class="tc-label">Target 1 Profit</div>
+                                    <div class="tc-value green">₹${t1}</div>
+                                    <div class="tc-subtext green">Est. Profit: ${inlineMath.qty > 0 ? '+₹'+inlineMath.profit.toFixed(2) : '--'}</div>
+                                </div>
+                                <div class="tc-box">
+                                    <div class="tc-label">Target 2 Profit</div>
+                                    <div class="tc-value green">₹${s.TradeSetup.target_2 || '--'}</div>
+                                </div>
+                            </div>
+                            <div class="trail-box">Strategy: ${s.TradeSetup.trailing_sl || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
             });
             feed.innerHTML = html;
-        }
-
-        function quickScan(symbol) {
-            document.getElementById('symbolInput').value = symbol;
-            analyze();
         }
 
         function setTimeframe(tf) {
@@ -287,6 +409,7 @@ HTML_LAYOUT = """
         async function analyze() {
             let symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
             if(!symbol) return;
+            
             document.getElementById('tradeCard').style.display = 'none';
             document.getElementById('loader').style.display = 'block';
 
@@ -302,43 +425,15 @@ HTML_LAYOUT = """
                 badge.className = data.Decision === 'STRONG_BUY' ? 'badge buy' : 'badge wait';
 
                 const setup = data.TradeSetup || {};
-                let entry = parseFloat(setup.entry) || 0;
-                let sl = parseFloat(setup.stop_loss) || 0;
-                let t1 = parseFloat(setup.target_1) || 0;
-                let t2 = parseFloat(setup.target_2) || 0;
-
-                document.getElementById('c-entry').innerText = entry ? `₹${entry}` : '--';
-                document.getElementById('c-sl').innerText = sl ? `₹${sl}` : '--';
-                document.getElementById('c-t1').innerText = t1 ? `₹${t1}` : '--';
-                document.getElementById('c-t2').innerText = t2 ? `₹${t2}` : '--';
+                document.getElementById('c-entry').innerText = setup.entry ? `₹${setup.entry}` : '--';
+                document.getElementById('c-sl').innerText = setup.stop_loss ? `₹${setup.stop_loss}` : '--';
+                document.getElementById('c-t1').innerText = setup.target_1 ? `₹${setup.target_1}` : '--';
+                document.getElementById('c-t2').innerText = setup.target_2 ? `₹${setup.target_2}` : '--';
                 document.getElementById('c-trail').innerText = setup.trailing_sl ? `Trailing SL Strategy: ${setup.trailing_sl}` : 'No active trade setup.';
 
-                const capitalInput = parseFloat(document.getElementById('capitalInput').value);
-                if (!isNaN(capitalInput) && capitalInput > 0 && entry > 0) {
-                    let count = currentSetups.length > 0 ? currentSetups.length : 1;
-                    let allocatedCap = capitalInput / count;
-                    let qty = Math.floor(allocatedCap / entry);
-
-                    if (qty > 0) {
-                        document.getElementById('c-alloc-shares').innerText = `Allocated: ${qty} shares (₹${(qty * entry).toFixed(2)})`;
-                        document.getElementById('c-risk-amt').innerText = `Total Risk: -₹${((entry - sl) * qty).toFixed(2)}`;
-                        document.getElementById('c-t1-profit').innerText = `Est. Profit: +₹${((t1 - entry) * qty).toFixed(2)}`;
-                        document.getElementById('c-t2-profit').innerText = `Est. Profit: +₹${((t2 - entry) * qty).toFixed(2)}`;
-                    } else {
-                        document.getElementById('c-alloc-shares').innerText = `Insufficient capital`;
-                        document.getElementById('c-risk-amt').innerText = `Total Risk: --`;
-                        document.getElementById('c-t1-profit').innerText = `Est. Profit: --`;
-                        document.getElementById('c-t2-profit').innerText = `Est. Profit: --`;
-                    }
-                } else {
-                    document.getElementById('c-alloc-shares').innerText = `Allocated: Enter capital above`;
-                    document.getElementById('c-risk-amt').innerText = `Total Risk: --`;
-                    document.getElementById('c-t1-profit').innerText = `Est. Profit: --`;
-                    document.getElementById('c-t2-profit').innerText = `Est. Profit: --`;
-                }
                 document.getElementById('tradeCard').style.display = 'block';
             } catch (err) {
-                alert("Could not load data for this stock.");
+                alert("Could not load data for this stock. Please check symbol.");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
