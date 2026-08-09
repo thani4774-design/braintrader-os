@@ -1,105 +1,204 @@
-"""
-BrainTrader - Swing Trading Engine
-----------------------------------
-Calibrated to find 3-5 high-probability setups.
-Calculates Entry, SL, Target 1, Target 2, and Trailing SL.
-"""
-
 import yfinance as yf
 import pandas as pd
-import numpy as np
+import json
+import os
+from datetime import datetime
+import warnings
 
-def calculate_rsi(data, periods=14):
-    delta = data['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=periods).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=periods).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
+# Suppress pandas fragmentation warnings for clean terminal output
+warnings.filterwarnings("ignore")
 
-def analyze_stock(symbol: str, timeframe="short"):
-    """
-    timeframe options: 
-    'short' = Daily chart (Hold days to weeks)
-    'mid' = Weekly chart (Hold weeks to months)
-    'long' = Monthly chart (Hold months to years)
-    """
-    
-    interval_map = {"short": "1d", "mid": "1wk", "long": "1mo"}
-    period_map = {"short": "1y", "mid": "2y", "long": "5y"}
-    
+# Import watchlists properly
+try:
+    from watchlists import NIFTY50, NIFTY500
+except ImportError:
     try:
-        ticker = yf.Ticker(symbol)
-        df = ticker.history(period=period_map[timeframe], interval=interval_map[timeframe])
+        from Code.watchlists import NIFTY50, NIFTY500
+    except ImportError:
+        NIFTY50 = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'BHARTIARTL.NS', 'SBIN.NS', 'ITC.NS', 'LT.NS']
+        NIFTY500 = NIFTY50
+
+def get_data(symbol, period="1y", interval="1d"):
+    """Fetches historical market data from Yahoo Finance."""
+    tkr = yf.Ticker(symbol)
+    df = tkr.history(period=period, interval=interval)
+    return df
+
+def calculate_rsi(data, window=14):
+    """Calculates the Relative Strength Index (RSI) mathematically."""
+    delta = data.diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
+    
+    avg_gain = gain.ewm(com=window-1, adjust=False).mean()
+    avg_loss = loss.ewm(com=window-1, adjust=False).mean()
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+def analyze_stock(symbol, timeframe="short"):
+    """
+    STRICT QUANTITATIVE FILTERING ENGINE (HANDLES BOTH MASTER SCAN & INDIVIDUAL SEARCH)
+    """
+    try:
+        # Pull 2 years of data for Long-Term/Mid-Term, 1 year for Short-Term
+        df = get_data(symbol, period="2y" if timeframe in ["long", "mid"] else "1y")
         
-        if df.empty or len(df) < 50:
+        if df.empty or len(df) < 100:
             return None
             
-        # 1. Calculate Core Technicals
-        df['EMA_20'] = df['Close'].ewm(span=20, adjust=False).mean()
+        # Calculate Core Indicators
         df['EMA_50'] = df['Close'].ewm(span=50, adjust=False).mean()
-        df['RSI'] = calculate_rsi(df, 14)
+        df['EMA_200'] = df['Close'].ewm(span=200, adjust=False).mean()
+        df['RSI_14'] = calculate_rsi(df['Close'])
+        df['Avg_Volume'] = df['Volume'].rolling(window=20).mean()
         
-        current_price = df['Close'].iloc[-1]
-        prev_price = df['Close'].iloc[-2]
-        current_rsi = df['RSI'].iloc[-1]
-        ema_20 = df['EMA_20'].iloc[-1]
+        current_price = round(df['Close'].iloc[-1], 2)
+        current_vol = df['Volume'].iloc[-1]
+        avg_vol = df['Avg_Volume'].iloc[-1]
         ema_50 = df['EMA_50'].iloc[-1]
+        ema_200 = df['EMA_200'].iloc[-1]
+        current_rsi = df['RSI_14'].iloc[-1]
         
-        # 2. Swing Trading Logic (Loosened to find 3-5 real trades)
-        # Rule 1: Uptrend (Price above 50 EMA)
-        # Rule 2: Pullback/Value Zone (RSI between 40 and 60)
-        # Rule 3: Momentum Shift (Today's close higher than yesterday's)
-        
-        is_uptrend = current_price > ema_50
-        is_value_zone = 40 <= current_rsi <= 65
-        is_momentum_up = current_price > prev_price
-        
-        score = 0
-        reasons = []
-        
-        if is_uptrend:
-            score += 40
-            reasons.append("Trading in a healthy uptrend (Above 50 EMA).")
-        if is_value_zone:
-            score += 30
-            reasons.append("Price is in a discount/pullback zone (RSI balanced).")
-        if is_momentum_up:
-            score += 30
-            reasons.append("Fresh buying momentum detected today.")
+        # ---------------------------------------------------------
+        # 1. SHORT TERM (DAYS): Strict Swing Rules (1.5x Vol Spike)
+        # ---------------------------------------------------------
+        if timeframe == "short":
+            if (current_price > ema_200) and (current_price > ema_50) and (50 <= current_rsi <= 70) and (current_vol > avg_vol * 1.5):
+                return {
+                    "Stock": symbol,
+                    "Price": current_price,
+                    "Decision": "STRONG_BUY",
+                    "TradeSetup": {
+                        "entry": str(current_price),
+                        "stop_loss": str(round(current_price * 0.94, 2)),
+                        "target_1": str(round(current_price * 1.08, 2)),
+                        "target_2": str(round(current_price * 1.15, 2)),
+                        "trailing_sl": "Move SL to Entry at T1"
+                    }
+                }
+            # Default response for Individual Search when setup is NOT ready
+            return {
+                "Stock": symbol,
+                "Price": current_price,
+                "Decision": "WAIT",
+                "TradeSetup": {
+                    "entry": str(current_price),
+                    "stop_loss": "N/A",
+                    "target_1": "N/A",
+                    "target_2": "N/A",
+                    "trailing_sl": "No active breakout setup. Await volume spike."
+                }
+            }
+
+        # ---------------------------------------------------------
+        # 2. MID TERM (WEEKS): Positional Trend Rules (1.2x Vol Spike)
+        # ---------------------------------------------------------
+        elif timeframe == "mid":
+            if (current_price > ema_200) and (current_price > ema_50) and (current_rsi >= 50):
+                return {
+                    "Stock": symbol,
+                    "Price": current_price,
+                    "Decision": "STRONG_BUY",
+                    "TradeSetup": {
+                        "entry": str(current_price),
+                        "stop_loss": str(round(current_price * 0.90, 2)), # 10% SL for Mid-term
+                        "target_1": str(round(current_price * 1.15, 2)), # 15% T1
+                        "target_2": str(round(current_price * 1.25, 2)), # 25% T2
+                        "trailing_sl": "Trail using 50-day EMA"
+                    }
+                }
+            return {
+                "Stock": symbol,
+                "Price": current_price,
+                "Decision": "WAIT",
+                "TradeSetup": {
+                    "entry": str(current_price),
+                    "stop_loss": "N/A",
+                    "target_1": "N/A",
+                    "target_2": "N/A",
+                    "trailing_sl": "Stock is not in a confirmed mid-term momentum zone."
+                }
+            }
+
+        # ---------------------------------------------------------
+        # 3. LONG TERM (MONTHS): Macro Accumulation Rules
+        # ---------------------------------------------------------
+        elif timeframe == "long":
+            fair_value = round(ema_200 * 1.02, 2)
+            zone_low = round(fair_value * 0.95, 2)
+            zone_high = round(fair_value * 1.04, 2)
             
-        # 3. Decision & Trade Math
-        decision = "WAIT"
-        trade_setup = {}
-        
-        if score >= 80:  # If at least 2 out of 3 conditions are met perfectly
-            decision = "STRONG_BUY"
-            
-            # Risk Management Math
-            atr = df['High'].iloc[-14:].max() - df['Low'].iloc[-14:].min() # Simple volatility measure
-            stop_loss = current_price - (atr * 0.5) # Stop loss below recent volatility
-            risk = current_price - stop_loss
-            
-            target_1 = current_price + (risk * 1.5) # 1:1.5 Risk Reward
-            target_2 = current_price + (risk * 2.5) # 1:2.5 Risk Reward
-            
-            trade_setup = {
-                "entry": round(current_price, 2),
-                "stop_loss": round(stop_loss, 2),
-                "target_1": round(target_1, 2),
-                "target_2": round(target_2, 2),
-                "trailing_sl": f"Move SL to Entry (₹{round(current_price, 2)}) when price hits Target 1",
-                "risk_reward": "1:2.5 Max"
+            if current_price <= (fair_value * 1.04):
+                return {
+                    "Stock": symbol,
+                    "Price": current_price,
+                    "Decision": "ACCUMULATE",
+                    "InvestmentSetup": {
+                        "fair_value": str(fair_value),
+                        "accumulation_zone": f"₹{zone_low} - ₹{zone_high}",
+                        "macro_invalid_level": str(round(ema_200 * 0.82, 2)),
+                        "historical_resistance": str(round(df['High'].max() * 1.15, 2))
+                    }
+                }
+            return {
+                "Stock": symbol,
+                "Price": current_price,
+                "Decision": "WAIT",
+                "InvestmentSetup": {
+                    "fair_value": str(fair_value),
+                    "accumulation_zone": f"₹{zone_low} - ₹{zone_high}",
+                    "macro_invalid_level": "N/A",
+                    "historical_resistance": "N/A"
+                }
             }
             
-        return {
-            "Stock": symbol,
-            "Price": round(current_price, 2),
-            "Timeframe": timeframe.upper(),
-            "Score": score,
-            "Decision": decision,
-            "TradeSetup": trade_setup,
-            "Reasons": reasons
-        }
-        
     except Exception as e:
         return None
+
+def run_master_scan():
+    print("==================================================")
+    print(" BRAINTRADER STRICT QUANT ENGINE RESTORED...")
+    print("==================================================")
+    
+    # --- PHASE 1: Swing Trading Scan ---
+    print(f"\n[Phase 1] Scanning Nifty 500 for True Institutional Momentum...")
+    daily_setups = []
+    
+    for sym in NIFTY500: 
+        res = analyze_stock(sym, "short")
+        # Only keep stocks with STRONG_BUY for master list
+        if res and res.get("Decision") == "STRONG_BUY": 
+            daily_setups.append(res)
+            
+    with open(r"C:\BrainTrader\daily_setups.json", "w", encoding="utf-8") as f:
+        json.dump({
+            "last_updated": datetime.now().strftime("%d %b %Y, %I:%M %p"), 
+            "setups": daily_setups
+        }, f)
+    print(f"--> Filtered down to {len(daily_setups)} high-probability swing trades.")
+        
+    # --- PHASE 2: Long-Term Wealth Scan ---
+    print(f"\n[Phase 2] Scanning Nifty 50 for True Macro-Discount Accumulation...")
+    wealth_setups = []
+    
+    for sym in NIFTY50: 
+        res = analyze_stock(sym, "long")
+        # Only keep stocks with ACCUMULATE for master list
+        if res and res.get("Decision") == "ACCUMULATE": 
+            wealth_setups.append(res)
+            
+    with open(r"C:\BrainTrader\wealth_setups.json", "w", encoding="utf-8") as f:
+        json.dump({
+            "last_updated": datetime.now().strftime("%d %b %Y, %I:%M %p"), 
+            "setups": wealth_setups
+        }, f)
+    print(f"--> Filtered down to {len(wealth_setups)} assets currently at a discount.")
+    
+    print("\n==================================================")
+    print(" ALGORITHMIC SCAN COMPLETE!")
+    print("==================================================")
+
+if __name__ == "__main__":
+    run_master_scan()

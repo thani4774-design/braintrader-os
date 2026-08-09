@@ -1,0 +1,8 @@
+# Ignore personal databases and generated daily data
+*.db
+*.sqlite3
+*.json
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
