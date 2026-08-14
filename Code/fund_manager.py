@@ -20,7 +20,14 @@ if MS_DIR not in sys.path:
 # 1. Import custom SMC Confluence Engine
 from confluence_engine import calculate_confluence
 
-# 2. Attempt imports from real SMC market_structure modules
+# 2. Import Live Angel One API Connection
+try:
+    from angel_connection import AngelOneAPI
+    ANGEL_AVAILABLE = True
+except ImportError:
+    ANGEL_AVAILABLE = False
+
+# 3. Attempt imports from real SMC market_structure modules
 try:
     import order_blocks
     import fvg_engine
@@ -32,28 +39,28 @@ try:
 except ImportError:
     SMC_MODULES_LOADED = False
 
-# 3. Import Watchlists or use robust fallback
+# 4. Import Watchlists
 try:
     from watchlists import NIFTY50, NIFTY500
 except ImportError:
-    NIFTY50 = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'SBIN.NS', 'BHARTIARTL.NS', 'ITC.NS', 'LTM.NS', 'AXISBANK.NS']
+    NIFTY50 = ['RELIANCE.NS', 'TCS.NS', 'HDFCBANK.NS', 'INFY.NS', 'ICICIBANK.NS', 'SBIN.NS']
     NIFTY500 = NIFTY50
 
 def update_active_trades():
-    """Checks past ACTIVE trades and upgrades them to WON or LOST based on current market prices."""
+    """Checks past ACTIVE trades and grades them ONLY if the entry price was filled."""
     print("\n[Phase 0] Grading past ACTIVE trades...")
     try:
         db_path = r"C:\BrainTrader\trade_history.db"
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        cursor.execute("SELECT id, symbol, target, stop_loss FROM trade_history WHERE status='ACTIVE'")
+        cursor.execute("SELECT id, symbol, entry, target, stop_loss FROM trade_history WHERE status='ACTIVE'")
         active_trades = cursor.fetchall()
         
         won_count = 0
         lost_count = 0
         
-        for trade_id, symbol, target, stop_loss in active_trades:
+        for trade_id, symbol, entry, target, stop_loss in active_trades:
             try:
                 tkr = yf.Ticker(symbol)
                 hist = tkr.history(period="5d")
@@ -61,13 +68,14 @@ def update_active_trades():
                     recent_high = hist['High'].max()
                     recent_low = hist['Low'].min()
                     
-                    if recent_high >= target:
-                        cursor.execute("UPDATE trade_history SET status='WON' WHERE id=?", (trade_id,))
-                        won_count += 1
-                    elif recent_low <= stop_loss:
-                        cursor.execute("UPDATE trade_history SET status='LOST' WHERE id=?", (trade_id,))
-                        lost_count += 1
-            except:
+                    if recent_low <= entry:
+                        if recent_high >= target:
+                            cursor.execute("UPDATE trade_history SET status='WON' WHERE id=?", (trade_id,))
+                            won_count += 1
+                        elif recent_low <= stop_loss:
+                            cursor.execute("UPDATE trade_history SET status='LOST' WHERE id=?", (trade_id,))
+                            lost_count += 1
+            except Exception:
                 continue
                 
         conn.commit()
@@ -76,7 +84,7 @@ def update_active_trades():
         if won_count > 0 or lost_count > 0:
             print(f"--> Upgraded {won_count} to WON and {lost_count} to LOST.")
         else:
-            print("--> All previous setups are still ACTIVE.")
+            print("--> All previous setups are still ACTIVE (or awaiting entry fill).")
             
     except Exception as e:
         print(f"History Update Warning: {e}")
@@ -118,13 +126,36 @@ def log_setup_to_history(setup):
     except Exception as e:
         print(f"Database Logging Warning: {e}")
 
+def is_sebi_safe_and_liquid(df, current_price):
+    """
+    SEBI Protection Shield: Filters out illiquid micro-caps and stocks 
+    exhibiting ASM/GSM circuit-lock characteristics.
+    """
+    try:
+        recent_20 = df.tail(20)
+        avg_daily_turnover = (recent_20['Volume'] * recent_20['Close']).mean()
+        
+        # Rule A: Reject if daily turnover is under ₹2 Crore
+        if avg_daily_turnover < 20000000:
+            return False, "Low Turnover (Illiquidity Risk)"
+
+        daily_ranges = ((recent_20['High'] - recent_20['Low']) / recent_20['Close']) * 100
+        avg_daily_range = daily_ranges.mean()
+        
+        # Rule B: Reject if average daily movement is less than 0.8% (typical of GSM circuit locks)
+        if avg_daily_range < 0.8:
+            return False, "Narrow Circuit Range (ASM/GSM Risk)"
+
+        return True, "SAFE"
+    except Exception:
+        return False, "Data Error"
+
 def extract_real_smc_data(df, current_price):
-    r"""Passes real market price data to market_structure modules to generate live SMC parameters."""
     ema_50 = df['Close'].ewm(span=50, adjust=False).mean().iloc[-1]
     ema_200 = df['Close'].ewm(span=200, adjust=False).mean().iloc[-1]
     
-    recent_high = df['High'].tail(50).max()
-    recent_low = df['Low'].tail(50).min()
+    recent_high = df['High'].tail(10).max()
+    recent_low = df['Low'].tail(10).min()
     equilibrium = (recent_high + recent_low) / 2.0
     
     pd_zone_status = "DISCOUNT" if current_price < equilibrium else "PREMIUM"
@@ -142,19 +173,23 @@ def extract_real_smc_data(df, current_price):
         "nearest_resistance": round(recent_high, 2)
     }
     
-    order_blocks_data = {"bullish": True, "level": round(recent_low * 1.02, 2)}
-    fvgs_data = {"bullish": True, "level": round(recent_low * 1.03, 2)}
+    order_blocks_data = {"bullish": True, "level": round(current_price * 0.985, 2)}
+    fvgs_data = {"bullish": True, "level": round(current_price * 0.99, 2)}
 
     if SMC_MODULES_LOADED:
         try:
             if hasattr(order_blocks, 'find_order_blocks'):
                 obs = order_blocks.find_order_blocks(df)
                 if obs:
-                    order_blocks_data = {"bullish": True, "level": round(df['Low'].iloc[-5], 2)}
+                    ob_level = round(df['Low'].iloc[-5], 2)
+                    if ob_level < current_price and ob_level >= current_price * 0.95:
+                        order_blocks_data = {"bullish": True, "level": ob_level}
             if hasattr(fvg_engine, 'detect_fvg'):
                 fvgs = fvg_engine.detect_fvg(df)
                 if fvgs:
-                    fvgs_data = {"bullish": True, "level": round(df['Low'].iloc[-3], 2)}
+                    fvg_level = round(df['Low'].iloc[-3], 2)
+                    if fvg_level < current_price and fvg_level >= current_price * 0.95:
+                        fvgs_data = {"bullish": True, "level": fvg_level}
         except Exception:
             pass
 
@@ -169,6 +204,13 @@ def analyze_stock(symbol, timeframe="short"):
             return None
             
         current_price = round(df['Close'].iloc[-1], 2)
+        
+        # --- SEBI & LIQUIDITY SAFETY SHIELD ---
+        is_safe, reason = is_sebi_safe_and_liquid(df, current_price)
+        if not is_safe:
+            return None
+        # --------------------------------------
+
         smc_tuple = extract_real_smc_data(df, current_price)
         
         result = calculate_confluence(
@@ -179,10 +221,12 @@ def analyze_stock(symbol, timeframe="short"):
         )
         
         if result['decision'] == "STRONG_BUY":
-            entry_price = smc_tuple[6]['level'] if smc_tuple[6]['level'] < current_price else round(current_price * 0.98, 2)
-            stop_loss = round(entry_price * 0.95, 2)
-            target_1 = round(entry_price * 1.08, 2)
-            target_2 = round(entry_price * 1.15, 2) if smc_tuple[4]['nearest_resistance'] <= target_1 else smc_tuple[4]['nearest_resistance']
+            ob_level = smc_tuple[6]['level']
+            entry_price = ob_level if (ob_level < current_price and ob_level >= round(current_price * 0.97, 2)) else current_price
+            
+            stop_loss = round(entry_price * 0.96, 2)
+            target_1 = round(entry_price * 1.06, 2)
+            target_2 = round(entry_price * 1.12, 2) if smc_tuple[4]['nearest_resistance'] <= target_1 else smc_tuple[4]['nearest_resistance']
             
             reasons_str = " | ".join(result['reasons'])
             
@@ -213,16 +257,7 @@ def analyze_stock(symbol, timeframe="short"):
                 }
             }
 
-        return {
-            "Stock": symbol,
-            "Price": current_price,
-            "Decision": "WAIT",
-            "TradeSetup": {
-                "entry": str(current_price),
-                "stop_loss": "N/A", "target_1": "N/A", "target_2": "N/A",
-                "trailing_sl": f"Below Threshold (Score: {result['score']})"
-            }
-        }
+        return None
             
     except Exception as e:
         return None
@@ -232,24 +267,62 @@ def run_master_scan():
     print(" BRAINTRADER SMC CONFLUENCE SCANNER ACTIVE")
     print("==================================================")
     
-    # Run the new auto-grader first!
     update_active_trades()
     
-    print(f"\n[Phase 1] Scanning {len(NIFTY500)} stocks via SMC Engine...")
-    daily_setups = []
+    available_margin = 0.0
+    print("\n[Phase 0.5] Connecting to Live Exchange...")
+    if ANGEL_AVAILABLE:
+        try:
+            broker = AngelOneAPI()
+            if broker.login():
+                available_margin = broker.get_available_balance()
+        except Exception as e:
+            print(f"[API ERROR] Connection failed: {e}")
+    else:
+        print("[WARNING] Angel One API module not loaded. Defaulting to Paper Trading.")
+    
+    print(f"\n[Phase 1] Scanning {len(NIFTY500)} stocks via SMC Engine (SEBI Filter ON)...")
+    all_setups = []
     
     for idx, sym in enumerate(NIFTY500, start=1): 
         res = analyze_stock(sym, "short")
         if res and res.get("Decision") == "STRONG_BUY": 
-            daily_setups.append(res)
-            log_setup_to_history(res)
+            try:
+                score_str = res['TradeSetup']['trailing_sl'].split('SMC Score: ')[1].split('.')[0]
+                res['raw_score'] = int(score_str)
+            except Exception:
+                res['raw_score'] = 0
+            all_setups.append(res)
+            
+    all_setups.sort(key=lambda x: x.get('raw_score', 0), reverse=True)
+    top_5_setups = all_setups[:5]
+    
+    num_trades = len(top_5_setups)
+    if num_trades > 0 and available_margin > 0:
+        capital_per_trade = available_margin / num_trades
+        print(f"--> Institutional Allocation: Splitting live margin across {num_trades} assets (₹{round(capital_per_trade, 2)} each).")
+    
+    for setup in top_5_setups:
+        entry_price = float(setup['TradeSetup']['entry'])
+        if available_margin > 0:
+            shares = int(capital_per_trade // entry_price)
+            allocated_capital = round(shares * entry_price, 2)
+            setup['TradeSetup']['quantity'] = str(shares)
+            setup['TradeSetup']['capital_allocated'] = f"₹{allocated_capital}"
+        else:
+            setup['TradeSetup']['quantity'] = "N/A"
+            setup['TradeSetup']['capital_allocated'] = "Paper Trading"
+            
+        setup.pop('raw_score', None)
+        log_setup_to_history(setup)
             
     with open(r"C:\BrainTrader\daily_setups.json", "w", encoding="utf-8") as f:
         json.dump({
             "last_updated": datetime.now().strftime("%d %b %Y, %I:%M %p"), 
-            "setups": daily_setups
+            "setups": top_5_setups
         }, f)
-    print(f"--> Approved {len(daily_setups)} elite SMC swing trades.")
+        
+    print(f"--> Approved {len(top_5_setups)} elite SMC swing trades.")
         
     print(f"\n[Phase 2] Scanning {len(NIFTY50)} stocks for Long-Term Value Accumulation...")
     wealth_setups = []
