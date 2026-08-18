@@ -90,7 +90,7 @@ def update_active_trades():
         print(f"History Update Warning: {e}")
 
 def log_setup_to_history(setup):
-    """Saves approved SMC setups into trade_history.db as ACTIVE trades for tracking."""
+    """Saves approved SMC setups into trade_history.db ONLY if they aren't already ACTIVE."""
     try:
         db_path = r"C:\BrainTrader\trade_history.db"
         conn = sqlite3.connect(db_path)
@@ -108,7 +108,9 @@ def log_setup_to_history(setup):
         ''')
         
         today = datetime.now().strftime("%Y-%m-%d")
-        cursor.execute("SELECT id FROM trade_history WHERE date=? AND symbol=?", (today, setup['Stock']))
+        
+        # FIX: Check if the symbol is already marked as 'ACTIVE' globally, preventing duplicates
+        cursor.execute("SELECT id FROM trade_history WHERE symbol=? AND status='ACTIVE'", (setup['Stock'],))
         if not cursor.fetchone():
             cursor.execute('''
                 INSERT INTO trade_history (date, symbol, entry, target, stop_loss, status)

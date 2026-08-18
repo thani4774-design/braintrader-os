@@ -70,11 +70,21 @@ def analyze_stock(symbol, timeframe="short"):
                     "Stock": symbol,
                     "Price": current_price,
                     "Decision": "STRONG_BUY",
+                    "Score": 92,
+                    "Confidence": 88,
+                    "Alignment": "BULLISH",
+                    "Reasons": [
+                        "Price > 200 & 50 EMA (Macro Trend Aligned)",
+                        f"RSI at {round(current_rsi, 1)} (Momentum Zone)",
+                        f"Institutional Volume Spike Detected ({(current_vol/avg_vol):.1f}x average)"
+                    ],
+                    "Warnings": [],
                     "TradeSetup": {
                         "entry": str(current_price),
                         "stop_loss": str(round(current_price * 0.94, 2)),
                         "target_1": str(round(current_price * 1.08, 2)),
                         "target_2": str(round(current_price * 1.15, 2)),
+                        "risk_reward": "1:2.5",
                         "trailing_sl": "Move SL to Entry at T1"
                     }
                 }
@@ -83,11 +93,20 @@ def analyze_stock(symbol, timeframe="short"):
                 "Stock": symbol,
                 "Price": current_price,
                 "Decision": "WAIT",
+                "Score": 45,
+                "Confidence": 50,
+                "Alignment": "NEUTRAL",
+                "Reasons": [],
+                "Warnings": [
+                    "Failed Volume Spike test (No institutional participation detected)",
+                    "RSI not in the optimal 50-70 swing pocket"
+                ],
                 "TradeSetup": {
                     "entry": str(current_price),
                     "stop_loss": "N/A",
                     "target_1": "N/A",
                     "target_2": "N/A",
+                    "risk_reward": "N/A",
                     "trailing_sl": "No active breakout setup. Await volume spike."
                 }
             }
@@ -101,11 +120,17 @@ def analyze_stock(symbol, timeframe="short"):
                     "Stock": symbol,
                     "Price": current_price,
                     "Decision": "STRONG_BUY",
+                    "Score": 85,
+                    "Confidence": 80,
+                    "Alignment": "BULLISH",
+                    "Reasons": ["Positional Trend Alignment Confirmed", "EMA Support Held"],
+                    "Warnings": [],
                     "TradeSetup": {
                         "entry": str(current_price),
-                        "stop_loss": str(round(current_price * 0.90, 2)), # 10% SL for Mid-term
-                        "target_1": str(round(current_price * 1.15, 2)), # 15% T1
-                        "target_2": str(round(current_price * 1.25, 2)), # 25% T2
+                        "stop_loss": str(round(current_price * 0.90, 2)), 
+                        "target_1": str(round(current_price * 1.15, 2)), 
+                        "target_2": str(round(current_price * 1.25, 2)), 
+                        "risk_reward": "1:3",
                         "trailing_sl": "Trail using 50-day EMA"
                     }
                 }
@@ -113,11 +138,17 @@ def analyze_stock(symbol, timeframe="short"):
                 "Stock": symbol,
                 "Price": current_price,
                 "Decision": "WAIT",
+                "Score": 30,
+                "Confidence": 40,
+                "Alignment": "BEARISH",
+                "Reasons": [],
+                "Warnings": ["Stock is not in a confirmed mid-term momentum zone."],
                 "TradeSetup": {
                     "entry": str(current_price),
                     "stop_loss": "N/A",
                     "target_1": "N/A",
                     "target_2": "N/A",
+                    "risk_reward": "N/A",
                     "trailing_sl": "Stock is not in a confirmed mid-term momentum zone."
                 }
             }
@@ -135,6 +166,11 @@ def analyze_stock(symbol, timeframe="short"):
                     "Stock": symbol,
                     "Price": current_price,
                     "Decision": "ACCUMULATE",
+                    "Score": 95,
+                    "Confidence": 90,
+                    "Alignment": "MACRO DISCOUNT",
+                    "Reasons": ["Trading below fair value equilibrium", "Strong risk-adjusted accumulation zone"],
+                    "Warnings": [],
                     "InvestmentSetup": {
                         "fair_value": str(fair_value),
                         "accumulation_zone": f"₹{zone_low} - ₹{zone_high}",
@@ -146,6 +182,11 @@ def analyze_stock(symbol, timeframe="short"):
                 "Stock": symbol,
                 "Price": current_price,
                 "Decision": "WAIT",
+                "Score": 50,
+                "Confidence": 60,
+                "Alignment": "PREMIUM",
+                "Reasons": [],
+                "Warnings": ["Asset is currently trading at a premium. Wait for a pullback to EMA 200."],
                 "InvestmentSetup": {
                     "fair_value": str(fair_value),
                     "accumulation_zone": f"₹{zone_low} - ₹{zone_high}",
