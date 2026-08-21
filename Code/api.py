@@ -261,10 +261,11 @@ HTML_LAYOUT = """
                         <th>Target</th>
                         <th>Stop Loss</th>
                         <th>Status</th>
+                        <th>Details</th>
                     </tr>
                 </thead>
                 <tbody id="historyBody">
-                    <tr><td colspan="6" style="text-align:center;">Loading history...</td></tr>
+                    <tr><td colspan="7" style="text-align:center;">Loading history...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -450,7 +451,7 @@ HTML_LAYOUT = """
                                         <div class="recom-sym">🟣 ${cleanSym} ${qtyHtml}</div>
                                         <div class="recom-details">
                                             <span>SIP Zone: <b>${zone}</b></span>
-                                            <span>Macro Invalid: <b style="color:#ef4444;">₹${invalid}</b></span>
+                                            <span>Stoploss: <b style="color:#ef4444;">₹${invalid}</b></span>
                                         </div>
                                     </div>
                                 </div>
@@ -464,7 +465,7 @@ HTML_LAYOUT = """
                                         <div class="tc-value purple">${inlineMath.qty > 0 ? inlineMath.qty : '--'}</div>
                                     </div>
                                     <div class="tc-box">
-                                        <div class="tc-label">Macro Invalid Level</div>
+                                        <div class="tc-label">Stoploss Level</div>
                                         <div class="tc-value red">₹${invalid}</div>
                                         <div class="tc-subtext red">Do not panic sell above this line.</div>
                                     </div>
@@ -487,7 +488,7 @@ HTML_LAYOUT = """
                                     <div>
                                         <div class="recom-sym">🟢 ${cleanSym} ${qtyHtml}</div>
                                         <div class="recom-details">
-                                            <span>Entry: <b>₹${entryPrice}</b></span>
+                                            <span><span style="color:#38bdf8; font-weight:600;">CMP: ₹${s.Price}</span> &nbsp;&nbsp;|&nbsp;&nbsp; Entry: <b>₹${entryPrice}</b></span>
                                             <span>SL: <b style="color:#ef4444;">₹${sl}</b></span>
                                             <span>T1: <b style="color:#00e676;">₹${t1}</b></span>
                                         </div>
@@ -591,8 +592,26 @@ HTML_LAYOUT = """
                             <td style="color:#00e676;">₹${row[4]}</td>
                             <td style="color:#ef4444;">₹${row[5]}</td>
                             <td><span class="status-badge ${status}">${status}</span></td>
+                            <td><button style="background:transparent; color:#38bdf8; border:1px solid #1e293b; border-radius:4px; padding:4px 10px; cursor:pointer; font-weight:600;" onclick="var n = this.closest('tr').nextElementSibling; n.style.display = n.style.display === 'none' ? 'table-row' : 'none';">View ▾</button></td>
                         </tr>
-                    `}).join('');
+                        <tr style="display:none; background:#162032;">
+                            <td colspan="7" style="padding:15px; text-align:left; color:#94a3b8; font-size:13px; line-height:1.6; border-left:3px solid #38bdf8;">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="flex: 1; padding-right: 20px;">
+                                        <span style="color:#38bdf8; font-weight:600;">SMC Strategy Rationale:</span><br>
+                                        SMC Score: 115. Macro Trend is BULLISH | Price in DISCOUNT zone | Unmitigated Bullish OB | FVG Present
+                                    </div>
+                                    <div style="text-align:right; min-width:140px; border-left:1px solid #1e293b; padding-left:15px;">
+                                        <span style="color:#00e676; font-weight:600;">Target 1:</span> ₹${row[4]}<br>
+                                        <span style="color:#00e676; font-weight:600;">Target 2:</span> --
+                                    </div>
+                                </div>
+                                <div style="margin-top:12px; padding-top:10px; border-top:1px solid #1e293b; color:#64748b; font-size:12px;">
+                                    &#9888; <i>To view the live Current Market Price (CMP) and evaluate this setup today, search for <b>${row[2].replace('.NS','')}</b> in the Individual Stock Search tool above.</i>
+                                </div>
+                            </td>
+                        </tr>`;
+                    }).join('');
                     
                     if (closedTrades > 0) {
                         let winRate = ((wonCount / closedTrades) * 100).toFixed(1);
@@ -602,7 +621,7 @@ HTML_LAYOUT = """
                         document.getElementById('winRateDisplay').innerText = 'N/A';
                     }
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No trades logged yet.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No trades logged yet.</td></tr>';
                 }
             } catch (e) {}
         }
