@@ -47,34 +47,53 @@ except ImportError:
     NIFTY500 = NIFTY50
 
 def update_active_trades():
-    """Checks past ACTIVE trades and grades them ONLY if the entry price was filled."""
+    """Checks past ACTIVE trades and grades them chronologically ONLY after the entry date."""
     print("\n[Phase 0] Grading past ACTIVE trades...")
     try:
         db_path = r"C:\BrainTrader\trade_history.db"
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
-        cursor.execute("SELECT id, symbol, entry, target, stop_loss FROM trade_history WHERE status='ACTIVE'")
+        cursor.execute("SELECT id, symbol, entry, target, stop_loss, date FROM trade_history WHERE status='ACTIVE'")
         active_trades = cursor.fetchall()
         
         won_count = 0
         lost_count = 0
         
-        for trade_id, symbol, entry, target, stop_loss in active_trades:
+        for trade_id, symbol, entry, target, stop_loss, trade_date in active_trades:
             try:
                 tkr = yf.Ticker(symbol)
-                hist = tkr.history(period="5d")
-                if not hist.empty:
-                    recent_high = hist['High'].max()
-                    recent_low = hist['Low'].min()
+                hist = tkr.history(period="1mo")
+                if hist.empty:
+                    continue
                     
-                    if recent_low <= entry:
-                        if recent_high >= target:
-                            cursor.execute("UPDATE trade_history SET status='WON' WHERE id=?", (trade_id,))
-                            won_count += 1
-                        elif recent_low <= stop_loss:
+                hist.index = hist.index.tz_localize(None)
+                post_entry_hist = hist[hist.index >= pd.to_datetime(trade_date)]
+                
+                if post_entry_hist.empty:
+                    continue
+                    
+                entered = False
+                
+                for current_date, row in post_entry_hist.iterrows():
+                    day_high = row['High']
+                    day_low = row['Low']
+                    
+                    if not entered:
+                        if day_low <= entry:
+                            entered = True
+                        else:
+                            continue
+                            
+                    if entered:
+                        if day_low <= stop_loss:
                             cursor.execute("UPDATE trade_history SET status='LOST' WHERE id=?", (trade_id,))
                             lost_count += 1
+                            break
+                        elif day_high >= target:
+                            cursor.execute("UPDATE trade_history SET status='WON' WHERE id=?", (trade_id,))
+                            won_count += 1
+                            break
             except Exception:
                 continue
                 
@@ -109,7 +128,7 @@ def log_setup_to_history(setup):
         
         today = datetime.now().strftime("%Y-%m-%d")
         
-        # FIX: Check if the symbol is already marked as 'ACTIVE' globally, preventing duplicates
+        # Prevent duplicates
         cursor.execute("SELECT id FROM trade_history WHERE symbol=? AND status='ACTIVE'", (setup['Stock'],))
         if not cursor.fetchone():
             cursor.execute('''
@@ -129,22 +148,17 @@ def log_setup_to_history(setup):
         print(f"Database Logging Warning: {e}")
 
 def is_sebi_safe_and_liquid(df, current_price):
-    """
-    SEBI Protection Shield: Filters out illiquid micro-caps and stocks 
-    exhibiting ASM/GSM circuit-lock characteristics.
-    """
+    """SEBI Protection Shield: Filters out illiquid micro-caps and circuit locks."""
     try:
         recent_20 = df.tail(20)
         avg_daily_turnover = (recent_20['Volume'] * recent_20['Close']).mean()
         
-        # Rule A: Reject if daily turnover is under ₹2 Crore
         if avg_daily_turnover < 20000000:
             return False, "Low Turnover (Illiquidity Risk)"
 
         daily_ranges = ((recent_20['High'] - recent_20['Low']) / recent_20['Close']) * 100
         avg_daily_range = daily_ranges.mean()
         
-        # Rule B: Reject if average daily movement is less than 0.8% (typical of GSM circuit locks)
         if avg_daily_range < 0.8:
             return False, "Narrow Circuit Range (ASM/GSM Risk)"
 
@@ -207,11 +221,9 @@ def analyze_stock(symbol, timeframe="short"):
             
         current_price = round(df['Close'].iloc[-1], 2)
         
-        # --- SEBI & LIQUIDITY SAFETY SHIELD ---
         is_safe, reason = is_sebi_safe_and_liquid(df, current_price)
         if not is_safe:
             return None
-        # --------------------------------------
 
         smc_tuple = extract_real_smc_data(df, current_price)
         
@@ -296,9 +308,16 @@ def run_master_scan():
                 res['raw_score'] = 0
             all_setups.append(res)
             
+    # Sort all setups by institutional score
     all_setups.sort(key=lambda x: x.get('raw_score', 0), reverse=True)
-    top_5_setups = all_setups[:5]
     
+    # 1. Log ALL qualifying setups into SQLite database for rapid statistical sample testing
+    for setup in all_setups:
+        log_setup_to_history(setup)
+    print(f"--> Logged all {len(all_setups)} qualified SMC setups to trade_history.db for testing.")
+
+    # 2. Extract Top 5 for primary dashboard display and capital allocation modeling
+    top_5_setups = all_setups[:5]
     num_trades = len(top_5_setups)
     if num_trades > 0 and available_margin > 0:
         capital_per_trade = available_margin / num_trades
@@ -316,7 +335,6 @@ def run_master_scan():
             setup['TradeSetup']['capital_allocated'] = "Paper Trading"
             
         setup.pop('raw_score', None)
-        log_setup_to_history(setup)
             
     with open(r"C:\BrainTrader\daily_setups.json", "w", encoding="utf-8") as f:
         json.dump({
@@ -324,7 +342,7 @@ def run_master_scan():
             "setups": top_5_setups
         }, f)
         
-    print(f"--> Approved {len(top_5_setups)} elite SMC swing trades.")
+    print(f"--> Saved Top {len(top_5_setups)} elite swing trades to daily_setups.json.")
         
     print(f"\n[Phase 2] Scanning {len(NIFTY50)} stocks for Long-Term Value Accumulation...")
     wealth_setups = []
